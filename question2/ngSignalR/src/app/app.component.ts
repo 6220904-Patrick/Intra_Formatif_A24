@@ -32,12 +32,48 @@ export class AppComponent {
       .withUrl('http://localhost:5282/hubs/pizza')
       .build();
 
+    this.hubConnection!.on('UpdateNbUsers', (data) => {
+      console.log(data);
+      this.nbUsers = data;
+    });
+
+    this.hubConnection!.on('UpdatePizzaPrice', (data) => {
+      console.log(data);
+      this.pizzaPrice = data;
+    });
+
+    this.hubConnection!.on('UpdateMoney', (data) => {
+      console.log(data);
+      this.money = data;
+    });
+
+    this.hubConnection!.on('UpdateNbPizzasAndMoney', (data) => {
+      console.log(data);
+      this.nbPizzas = data[0];
+      this.money = data[1];
+    });
     // TODO: Mettre isConnected à true seulement une fois que la connection au Hub est faite
-    this.isConnected = true;
+    this.hubConnection
+      .start()
+      .then(() => {
+        console.log('La connexion est active!');
+        this.isConnected = true;
+      })
+      .catch(err => {
+        console.log('Error while starting connection: ' + err)
+        this.isConnected = false;
+      });
+
   }
 
   selectChoice(selectedChoice:number) {
-    this.selectedChoice = selectedChoice;
+    if (this.isConnected) {
+      this.selectedChoice = selectedChoice;
+      this.hubConnection!.invoke('SelectChoice', selectedChoice)
+        .catch(err => console.error('Error invoking SelectChoice:', err));
+    } else {
+      console.error("Not connected to the SignalR server");
+    }
   }
 
   unselectChoice() {
@@ -45,8 +81,10 @@ export class AppComponent {
   }
 
   addMoney() {
+    this.hubConnection!.invoke('AddMoney', this.selectedChoice);
   }
 
   buyPizza() {
+    this.hubConnection!.invoke('BuyPizza', this.selectedChoice);
   }
 }
