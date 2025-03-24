@@ -77,7 +77,13 @@ export class AppComponent {
   }
 
   unselectChoice() {
-    this.selectedChoice = -1;
+    if (this.isConnected) {
+      this.hubConnection!.invoke('UnselectChoice', this.selectedChoice)
+        .catch(err => console.error('Error invoking UnselectChoice:', err));
+      this.selectedChoice = -1;
+      } else {
+      console.error("Not connected to the SignalR server");
+    }
   }
 
   addMoney() {
